@@ -1,0 +1,433 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Tenant {
+  id                String               @id @default(uuid())
+  name              String
+  slug              String               @unique
+  category          String               @default("OTHER")
+  phoneWa           String               @default("") @map("phone_wa")
+  address           String               @default("")
+  latitude          Float?
+  longitude         Float?
+  geofenceRadius    Int                  @default(50) @map("geofence_radius")
+  googleReviewUrl   String               @default("") @map("google_review_url")
+  instagramUrl      String?              @map("instagram_url")
+  tiktokUrl         String?              @map("tiktok_url")
+  logoUrl           String?              @map("logo_url")
+  activeQrMode      String               @default("DEFAULT_HUB") @map("active_qr_mode")
+  dailyStaffPinHash String?              @map("daily_staff_pin_hash")
+  workStartTime     String               @default("09:00") @map("work_start_time")
+  planTier          String               @default("LARIS") @map("plan_tier")
+  planStatus        String               @default("TRIAL") @map("plan_status")
+  managedByRai      Boolean              @default(true) @map("managed_by_rai")
+  isActive          Boolean              @default(true) @map("is_active")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  users             User[]
+  groupId           String?              @map("group_id")
+  group             TenantGroup?         @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  qrCodes           QrCode[]
+  storeVisits       StoreVisit[]
+  visitorSessions   VisitorSession[]
+  products          Product[]
+  loyaltyProgram    LoyaltyProgram?
+  customers         Customer[]
+  feedback          CustomerFeedback[]
+  reviewClicks      ReviewClick[]
+  stampEvents       StampEvent[]
+  vouchers          Voucher[]
+  queueTickets      QueueTicket[]
+  orders            Order[]
+  cashDrawerShifts  CashDrawerShift[]
+  cashMovements     CashDrawerMovement[]
+  attendances       Attendance[]
+
+  @@map("tenants")
+}
+
+model User {
+  id           String             @id @default(uuid())
+  tenantId     String?            @map("tenant_id")
+  name         String
+  email        String             @unique
+  phone        String?
+  passwordHash String             @map("password_hash")
+  role         String
+  isActive     Boolean            @default(true) @map("is_active")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  tenant       Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  authSessions AuthSession[]
+  tenantGroups TenantGroupOwner[]
+  stampEvents  StampEvent[]
+  orders       Order[]
+  openedShifts CashDrawerShift[]  @relation("ShiftOpenedBy")
+  closedShifts CashDrawerShift[]  @relation("ShiftClosedBy")
+  attendances  Attendance[]
+
+  @@index([tenantId, role])
+  @@map("users")
+}
+
+model TenantGroup {
+  id        String             @id @default(uuid())
+  name      String
+  createdAt DateTime           @default(now()) @map("created_at")
+  owners    TenantGroupOwner[]
+  tenants   Tenant[]
+
+  @@map("tenant_groups")
+}
+
+model TenantGroupOwner {
+  groupId   String      @map("group_id")
+  userId    String      @map("user_id")
+  createdAt DateTime    @default(now()) @map("created_at")
+  group     TenantGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+  @@unique([userId])
+  @@map("tenant_group_owners")
+}
+
+model QrCode {
+  id          String       @id @default(uuid())
+  code        String       @unique
+  tenantId    String?      @map("tenant_id")
+  label       String       @default("")
+  status      String       @default("UNASSIGNED")
+  totalScans  Int          @default(0) @map("total_scans")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  tenant      Tenant?      @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  storeVisits StoreVisit[]
+
+  @@index([tenantId, status])
+  @@map("qr_codes")
+}
+
+model VisitorSession {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  visitorToken String   @map("visitor_token")
+  firstSeenAt  DateTime @map("first_seen_at")
+  lastSeenAt   DateTime @map("last_seen_at")
+  visitCount   Int      @default(1) @map("visit_count")
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, visitorToken])
+  @@map("visitor_sessions")
+}
+
+model StoreVisit {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  qrCodeId     String   @map("qr_code_id")
+  visitorToken String   @map("visitor_token")
+  visitorType  String   @map("visitor_type")
+  visitedAt    DateTime @default(now()) @map("visited_at")
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  qrCode       QrCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, visitedAt])
+  @@index([tenantId, visitorType, visitedAt])
+  @@index([qrCodeId, visitedAt])
+  @@index([visitorToken])
+  @@map("store_visits")
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  tenantId    String      @map("tenant_id")
+  category    String      @default("Umum")
+  name        String
+  description String      @default("")
+  price       Int
+  imageUrl    String?     @map("image_url")
+  isAvailable Boolean     @default(true) @map("is_available")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
+
+  @@index([tenantId, isAvailable, category])
+  @@map("products")
+}
+
+model LoyaltyProgram {
+  id             String  @id @default(uuid())
+  tenantId       String  @unique @map("tenant_id")
+  isActive       Boolean @default(true) @map("is_active")
+  targetStamps   Int     @default(5) @map("target_stamps")
+  rewardTitle    String  @default("Hadiah spesial") @map("reward_title")
+  termsText      String  @default("") @map("terms_text")
+  rewardDiscount Int     @default(0) @map("reward_discount")
+  tenant         Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("loyalty_programs")
+}
+
+model StoreApplication {
+  id              String    @id @default(uuid())
+  businessName    String    @map("business_name")
+  slug            String
+  category        String    @default("OTHER")
+  ownerName       String    @map("owner_name")
+  ownerEmail      String    @map("owner_email")
+  phoneWa         String    @map("phone_wa")
+  address         String    @default("")
+  mapsUrl         String    @default("") @map("maps_url")
+  googleReviewUrl String    @default("") @map("google_review_url")
+  planTier        String    @default("LARIS") @map("plan_tier")
+  staffName       String    @default("") @map("staff_name")
+  staffEmail      String    @default("") @map("staff_email")
+  dataConsent     Boolean   @default(false) @map("data_consent")
+  status          String    @default("PENDING")
+  reviewNote      String    @default("") @map("review_note")
+  tenantId        String?   @map("tenant_id")
+  submittedAt     DateTime  @default(now()) @map("submitted_at")
+  reviewedAt      DateTime? @map("reviewed_at")
+
+  @@index([status, submittedAt])
+  @@index([ownerEmail, submittedAt])
+  @@map("store_applications")
+}
+
+model Customer {
+  id             String             @id @default(uuid())
+  tenantId       String             @map("tenant_id")
+  name           String
+  phoneWa        String             @map("phone_wa")
+  cardToken      String             @unique @default(uuid()) @map("card_token")
+  stampBalance   Int                @default(0) @map("stamp_balance")
+  stampsIssued   Int                @default(0) @map("stamps_issued")
+  stampsRedeemed Int                @default(0) @map("stamps_redeemed")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  stampEvents    StampEvent[]
+  vouchers       Voucher[]
+  orders         Order[]
+  feedback       CustomerFeedback[]
+  queueTickets   QueueTicket[]
+
+  @@unique([tenantId, phoneWa])
+  @@index([tenantId, createdAt])
+  @@map("customers")
+}
+
+model StampEvent {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  customerId String   @map("customer_id")
+  staffId    String?  @map("staff_id")
+  orderId    String?  @map("order_id")
+  quantity   Int      @default(1)
+  createdAt  DateTime @default(now()) @map("created_at")
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  staff      User?    @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  order      Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, customerId, createdAt])
+  @@map("stamp_events")
+}
+
+model Voucher {
+  id             String    @id @default(uuid())
+  tenantId       String    @map("tenant_id")
+  customerId     String?   @map("customer_id")
+  code           String    @unique
+  title          String
+  discountAmount Int       @default(0) @map("discount_amount")
+  status         String    @default("ISSUED")
+  expiresAt      DateTime? @map("expires_at")
+  redeemedAt     DateTime? @map("redeemed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer       Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  orders         Order[]
+
+  @@index([tenantId, status, expiresAt])
+  @@map("vouchers")
+}
+
+model CustomerFeedback {
+  id         String    @id @default(uuid())
+  tenantId   String    @map("tenant_id")
+  customerId String?   @map("customer_id")
+  rating     Int
+  message    String    @default("")
+  status     String    @default("OPEN")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  resolvedAt DateTime? @map("resolved_at")
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, createdAt])
+  @@map("customer_feedback")
+}
+
+model ReviewClick {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  clickedAt DateTime @default(now()) @map("clicked_at")
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, clickedAt])
+  @@map("review_clicks")
+}
+
+model QueueTicket {
+  id           String    @id @default(uuid())
+  tenantId     String    @map("tenant_id")
+  customerId   String?   @map("customer_id")
+  dayKey       String    @map("day_key")
+  ticketNumber Int       @map("ticket_number")
+  customerName String    @default("") @map("customer_name")
+  phoneWa      String    @default("") @map("phone_wa")
+  status       String    @default("WAITING")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  calledAt     DateTime? @map("called_at")
+  tenant       Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer     Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, dayKey, ticketNumber])
+  @@index([tenantId, dayKey, status, ticketNumber])
+  @@map("queue_tickets")
+}
+
+model QueueCounter {
+  id        String @id
+  nextValue Int    @default(0) @map("next_value")
+
+  @@map("queue_counters")
+}
+
+model Order {
+  id            String           @id @default(uuid())
+  tenantId      String           @map("tenant_id")
+  staffId       String?          @map("staff_id")
+  customerId    String?          @map("customer_id")
+  voucherId     String?          @map("voucher_id")
+  shiftId       String?          @map("shift_id")
+  paymentMethod String           @map("payment_method")
+  subtotal      Int
+  discount      Int              @default(0)
+  total         Int
+  status        String           @default("PAID")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  tenant        Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  staff         User?            @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  customer      Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  voucher       Voucher?         @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  items         OrderItem[]
+  stampEvents   StampEvent[]
+  shift         CashDrawerShift? @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status, createdAt])
+  @@index([tenantId, shiftId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String  @map("order_id")
+  productId String  @map("product_id")
+  name      String
+  unitPrice Int     @map("unit_price")
+  quantity  Int
+  lineTotal Int     @map("line_total")
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model CashDrawerShift {
+  id           String               @id @default(uuid())
+  tenantId     String               @map("tenant_id")
+  openedById   String               @map("opened_by_id")
+  closedById   String?              @map("closed_by_id")
+  openingCash  Int                  @map("opening_cash")
+  countedCash  Int?                 @map("counted_cash")
+  expectedCash Int?                 @map("expected_cash")
+  openedAt     DateTime             @default(now()) @map("opened_at")
+  closedAt     DateTime?            @map("closed_at")
+  tenant       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  openedBy     User                 @relation("ShiftOpenedBy", fields: [openedById], references: [id], onDelete: Restrict)
+  closedBy     User?                @relation("ShiftClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+  movements    CashDrawerMovement[]
+  orders       Order[]
+
+  @@index([tenantId, openedAt])
+  @@index([tenantId, closedAt])
+  @@map("cash_drawer_shifts")
+}
+
+model CashDrawerMovement {
+  id          String          @id @default(uuid())
+  tenantId    String          @map("tenant_id")
+  shiftId     String          @map("shift_id")
+  createdById String?         @map("created_by_id")
+  type        String
+  amount      Int
+  note        String          @default("")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  shift       CashDrawerShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@index([shiftId, createdAt])
+  @@map("cash_drawer_movements")
+}
+
+model Attendance {
+  id                 String    @id @default(uuid())
+  tenantId           String    @map("tenant_id")
+  userId             String    @map("user_id")
+  dayKey             String    @map("day_key")
+  checkInAt          DateTime  @default(now()) @map("check_in_at")
+  checkOutAt         DateTime? @map("check_out_at")
+  checkInLatitude    Float     @map("check_in_latitude")
+  checkInLongitude   Float     @map("check_in_longitude")
+  checkInDistance    Int       @map("check_in_distance")
+  checkInSelfieAt    DateTime  @map("check_in_selfie_at")
+  checkInSelfieData  String    @map("check_in_selfie_data")
+  checkOutLatitude   Float?    @map("check_out_latitude")
+  checkOutLongitude  Float?    @map("check_out_longitude")
+  checkOutDistance   Int?      @map("check_out_distance")
+  checkOutSelfieAt   DateTime? @map("check_out_selfie_at")
+  checkOutSelfieData String?   @map("check_out_selfie_data")
+  tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, dayKey])
+  @@index([tenantId, dayKey, checkInAt])
+  @@map("attendances")
+}
+
+model AdminLoginAttempt {
+  emailHash     String   @id @map("email_hash")
+  windowStartAt DateTime @map("window_start_at")
+  attempts      Int      @default(0)
+
+  @@map("admin_login_attempts")
+}
+
+model AuthSession {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("auth_sessions")
+}

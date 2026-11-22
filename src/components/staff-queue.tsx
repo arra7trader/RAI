@@ -1,0 +1,12 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+type Ticket = { id: string; ticketNumber: number; customerName: string; status: string };
+export function StaffQueue() {
+  const [tickets, setTickets] = useState<Ticket[]>([]); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  const refresh = useCallback(async () => { try { const response = await fetch("/api/staff/queue", { cache: "no-store" }); const body = await response.json(); if (!response.ok) throw new Error(body.error); setTickets(body.tickets); } catch (cause) { setError(cause instanceof Error ? cause.message : "Daftar antrean gagal dimuat."); } }, []);
+  useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 10000); return () => window.clearInterval(timer); }, [refresh]);
+  async function action(action: "NEXT" | "COMPLETE" | "SKIP", ticketId?: string) { setBusy(true); setError(""); try { const response = await fetch("/api/staff/queue", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action, ticketId }) }); const body = await response.json(); if (!response.ok) throw new Error(body.error); await refresh(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Perubahan antrean gagal."); } finally { setBusy(false); } }
+  const called = tickets.find((ticket) => ticket.status === "CALLED");
+  return <section className="admin-card"><div className="queue-admin-head"><h2>Sekarang: {called ? String(called.ticketNumber).padStart(3,"0") : "—"}</h2><button className="button" type="button" onClick={() => void action("NEXT")} disabled={busy}>Panggil berikutnya</button></div>{error && <p className="form-error">{error}</p>}<div className="queue-number-list">{tickets.map((ticket) => <article className={`queue-admin-row ${ticket.status === "CALLED" ? "called" : ""}`} key={ticket.id}><div><strong>{String(ticket.ticketNumber).padStart(3,"0")} · {ticket.customerName || "Pelanggan"}</strong><span>{ticket.status === "CALLED" ? "Sedang dipanggil" : "Menunggu"}</span></div>{ticket.status === "CALLED" && <div className="queue-row-actions"><button className="admin-logout" type="button" disabled={busy} onClick={() => void action("COMPLETE", ticket.id)}>Selesai</button><button className="admin-logout" type="button" disabled={busy} onClick={() => void action("SKIP", ticket.id)}>Lewati</button></div>}</article>)}{!tickets.length && <p className="admin-field-help">Antrean hari ini kosong.</p>}</div></section>;
+}
