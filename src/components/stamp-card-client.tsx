@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Card = { name: string; cardToken: string; stampBalance: number; stampsIssued: number; stampsRedeemed: number };
-type Program = { targetStamps: number; rewardTitle: string };
+type Program = { targetStamps: number; rewardTitle: string; termsText: string };
 
 export function StampCardClient({ storeSlug, program, cardToken }: { storeSlug: string; program: Program | null; cardToken: string }) {
   const [card, setCard] = useState<Card | null>(null);
@@ -33,5 +33,5 @@ export function StampCardClient({ storeSlug, program, cardToken }: { storeSlug: 
     {error && <p className="form-error">{error}</p>}<button className="button" type="submit" disabled={busy}>{busy ? "Membuat kartu…" : "Buat kartu digital"}</button>
   </form>;
   const count = Math.min(Math.max(program.targetStamps, 1), 20);
-  return <section className="stamp-card"><span className="store-kicker">Kartu pelanggan · {card.name}</span><h2>{program.rewardTitle}</h2><p>Kumpulkan {program.targetStamps} stempel untuk membuka hadiah.</p><div className="stamp-slots">{Array.from({ length: count }, (_, index) => <span className={`stamp-slot ${index < card.stampBalance % count ? "filled" : ""}`} key={index}>{index < card.stampBalance % count ? "✓" : index + 1}</span>)}</div><p><strong>{card.stampBalance % count} / {program.targetStamps} stempel</strong> · total terkumpul {card.stampsIssued}</p><div className="stamp-note">Tunjukkan kartu ini kepada kasir: <code>{card.cardToken}</code></div><p><a className="admin-table-link" href={`/${storeSlug}/stamp?card=${encodeURIComponent(card.cardToken)}`}>Simpan tautan kartu</a></p>{error && <p className="form-error">{error}</p>}</section>;
+  return <section className="stamp-card"><span className="store-kicker">Kartu pelanggan · {card.name}</span><h2>{program.rewardTitle}</h2><p>Kumpulkan {program.targetStamps} stempel untuk membuka hadiah.</p>{program.termsText && <p>{program.termsText}</p>}<div className="stamp-slots">{Array.from({ length: count }, (_, index) => <span className={`stamp-slot ${index < card.stampBalance % count ? "filled" : ""}`} key={index}>{index < card.stampBalance % count ? "✓" : index + 1}</span>)}</div><p><strong>{card.stampBalance % count} / {program.targetStamps} stempel</strong> · total terkumpul {card.stampsIssued}</p><div className="stamp-note">Tunjukkan kartu ini kepada kasir: <code>{card.cardToken}</code></div><p><a className="admin-table-link" href={`/${storeSlug}/stamp?card=${encodeURIComponent(card.cardToken)}`}>Simpan tautan kartu</a></p>{error && <p className="form-error">{error}</p>}</section>;
 }

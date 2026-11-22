@@ -230,6 +230,9 @@ button { font: inherit; }
 .report-export-form input, .branch-group-layout select { min-height: 42px; padding: 8px 10px; border: 1px solid rgba(0,0,0,.12); border-radius: 11px; background: white; font: inherit; }
 .branch-group-layout { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(230px,.65fr); align-items: start; gap: 16px; }
 .branch-group-layout .onboarding-form { gap: 20px; }
+.tenant-settings-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-items: start; gap: 16px; }
+.bulk-products-form > p { max-width: 760px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.bulk-products-form textarea { min-height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .branch-group-layout .admin-form-section { padding-bottom: 18px; }
 .branch-group-note { position: sticky; top: 88px; }
 .branch-store-list { display: grid; gap: 8px; }
@@ -322,6 +325,17 @@ button { font: inherit; }
 .admin-login-card .admin-back-link { margin-top: 22px; }
 @media print {
   body { background: white !important; }
+  body * { visibility: hidden !important; }
+  .qr-sheet, .qr-sheet * { visibility: visible !important; }
+  .pos-receipt, .pos-receipt * { visibility: visible !important; }
+  .pos-receipt { position: absolute; inset: 0 auto auto 0; width: 58mm; max-width: 58mm; margin: 0; padding: 3mm; color: #000; font: 10pt/1.35 system-ui, sans-serif; }
+  .pos-receipt h2 { margin: 2mm 0; font-size: 14pt; }
+  .pos-receipt > p { margin: 1mm 0 3mm; font-size: 8pt; }
+  .pos-receipt .admin-eyebrow { font-size: 7pt; }
+  .receipt-items, .receipt-totals { display: grid; gap: 2mm; margin-top: 3mm; }
+  .receipt-row { display: flex; justify-content: space-between; gap: 2mm; font-size: 8pt; }
+  .receipt-totals { grid-template-columns: 1fr auto; padding-top: 2mm; border-top: 1px dashed #777; font-size: 8pt; }
+  .pos-receipt-actions { display: none !important; }
   .admin-topbar, .admin-nav, .admin-page-heading, .qr-batch-form, .qr-sheet-heading, .nextjs-portal { display: none !important; }
   .admin-shell, .admin-card, .qr-sheet { border: 0; background: white; box-shadow: none; }
   .container, .admin-layout { width: 100%; max-width: none; padding: 0; display: block; }
@@ -346,6 +360,7 @@ button { font: inherit; }
   .qr-print-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .queue-layout { grid-template-columns: 1fr; }
   .branch-group-layout { grid-template-columns: 1fr; }
+  .tenant-settings-grid { grid-template-columns: 1fr; }
   .branch-group-note { position: static; }
   .report-export-card { align-items: stretch; flex-direction: column; }
   .report-export-form { flex-wrap: wrap; }

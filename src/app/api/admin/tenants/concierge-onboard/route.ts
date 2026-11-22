@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
                 : []),
             ],
           },
-          loyaltyProgram: { create: {} },
+          loyaltyProgram: { create: { isActive: false } },
         },
         select: { id: true, name: true, slug: true },
       });

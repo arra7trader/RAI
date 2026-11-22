@@ -28,7 +28,7 @@ export default async function TenantsPage() {
       </div>
       <div className="admin-table-wrap">
         <table className="admin-table">
-          <thead><tr><th>Nama toko</th><th>Kategori</th><th>Paket</th><th>Status</th><th>QR aktif</th><th>URL publik</th></tr></thead>
+          <thead><tr><th>Nama toko</th><th>Kategori</th><th>Paket</th><th>Status</th><th>QR aktif</th><th>URL publik</th><th>Produk</th><th>Pengaturan</th></tr></thead>
           <tbody>
             {tenants.map((tenant) => (
               <tr key={tenant.id}>
@@ -38,9 +38,11 @@ export default async function TenantsPage() {
                 <td><span className={`admin-status ${tenant.isActive ? "success" : "inactive"}`}>{tenant.isActive ? tenant.planStatus : "NONAKTIF"}</span></td>
                 <td>{tenant.qrCodes[0]?.code ?? "—"}</td>
                 <td><Link className="admin-table-link" href={`/${tenant.slug}`}>/{tenant.slug} ↗</Link></td>
+                <td><Link className="admin-table-link" href={`/admin/tenants/${tenant.id}/products`}>Impor ↗</Link></td>
+                <td><Link className="admin-table-link" href={`/admin/tenants/${tenant.id}/settings`}>Kelola ↗</Link></td>
               </tr>
             ))}
-            {!tenants.length && <tr><td className="admin-empty-cell" colSpan={6}>Belum ada toko. Mulai dari onboarding pertama.</td></tr>}
+            {!tenants.length && <tr><td className="admin-empty-cell" colSpan={8}>Belum ada toko. Mulai dari onboarding pertama.</td></tr>}
           </tbody>
         </table>
       </div>

@@ -71,7 +71,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             { name: application.ownerName, email: application.ownerEmail, passwordHash: ownerHash, role: "OWNER" },
             ...(application.staffEmail && application.staffName && staffHash ? [{ name: application.staffName, email: application.staffEmail, passwordHash: staffHash, role: "STAFF" }] : []),
           ] },
-          loyaltyProgram: { create: {} },
+          loyaltyProgram: { create: { isActive: false } },
         },
         select: { id: true, name: true, slug: true },
       });

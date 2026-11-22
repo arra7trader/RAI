@@ -33,6 +33,8 @@ Before `admin:bootstrap`, set `RAI_SUPER_ADMIN_NAME`, `RAI_SUPER_ADMIN_EMAIL`, a
 - POS, digital stamps and vouchers, queue management, cash drawer shifts, attendance with GPS geofencing, customer feedback, and owner sales reports.
 - Owner XLSX export for transactions, cash shifts, drawer movements, and attendance. Downloads are limited to 90 days and use the owner’s store or explicitly assigned RAI Juragan group.
 - Multi-branch daily summaries for Super Admin-linked RAI Juragan stores. Other store owners do not inherit group access.
+- Super Admin bulk product import by pasting Excel TSV into a single selected tenant; import rejects duplicate or invalid rows before writing.
+- Per-tenant Super Admin controls for dynamic QR destination and loyalty program terms, stamp target, and reward amount. New tenants keep rewards disabled until a valid discount is configured.
 
 Owner and staff can sign in at `/login`. Scanning an assigned store QR redirects its owner to `/dashboard` and its staff to `/app`; other visitors continue to the public store portal. Reports and XLSX downloads are restricted to the signed-in owner’s tenant scope. Automatic nightly WhatsApp reports remain disabled until a provider is selected.
 

@@ -18,17 +18,24 @@ export async function POST(request: NextRequest) {
   try {
     const card = await db.customer.findFirst({ where: { tenantId, cardToken: parsed.data.cardToken }, include: { tenant: { select: { loyaltyProgram: true } } } });
     const program = card?.tenant.loyaltyProgram;
-    if (!card || !program?.isActive) return NextResponse.json({ error: "Kartu atau program loyalti tidak ditemukan." }, { status: 404 });
+    if (!card || !program?.isActive || program.rewardDiscount < 1) return NextResponse.json({ error: "Kartu tidak ditemukan atau hadiah toko belum diatur." }, { status: 404 });
     if (card.stampBalance < program.targetStamps) return NextResponse.json({ error: `Pelanggan membutuhkan ${program.targetStamps - card.stampBalance} stempel lagi.` }, { status: 409 });
     const code = `RAI-${randomBytes(5).toString("hex").toUpperCase()}`;
-    const voucher = await db.$transaction(async (tx) => {
-      const redeemed = await tx.customer.updateMany({ where: { id: card.id, tenantId, stampBalance: { gte: program.targetStamps } }, data: { stampBalance: { decrement: program.targetStamps }, stampsRedeemed: { increment: program.targetStamps } } });
+    const result = await db.$transaction(async (tx) => {
+      const current = await tx.loyaltyProgram.findUnique({ where: { tenantId }, select: { isActive: true, targetStamps: true, rewardTitle: true, rewardDiscount: true } });
+      if (!current?.isActive || current.rewardDiscount < 1) throw new Error("REWARD_NOT_CONFIGURED");
+      const redeemed = await tx.customer.updateMany({ where: { id: card.id, tenantId, stampBalance: { gte: current.targetStamps } }, data: { stampBalance: { decrement: current.targetStamps }, stampsRedeemed: { increment: current.targetStamps } } });
       if (redeemed.count !== 1) throw new Error("NOT_ENOUGH_STAMPS");
-      return tx.voucher.create({ data: { tenantId, customerId: card.id, code, title: program.rewardTitle, discountAmount: program.rewardDiscount }, select: { code: true, title: true, discountAmount: true } });
+      const [voucher, customer] = await Promise.all([
+        tx.voucher.create({ data: { tenantId, customerId: card.id, code, title: current.rewardTitle, discountAmount: current.rewardDiscount }, select: { code: true, title: true, discountAmount: true } }),
+        tx.customer.findUniqueOrThrow({ where: { id: card.id }, select: { stampBalance: true } }),
+      ]);
+      return { voucher, stampBalance: customer.stampBalance };
     });
-    return NextResponse.json({ voucher, customer: { name: card.name, stampBalance: card.stampBalance - program.targetStamps } }, { status: 201 });
+    return NextResponse.json({ voucher: result.voucher, customer: { name: card.name, stampBalance: result.stampBalance } }, { status: 201 });
   } catch (error) {
     if (error instanceof Error && error.message === "NOT_ENOUGH_STAMPS") return NextResponse.json({ error: "Saldo stempel berubah. Periksa kartu lalu coba lagi." }, { status: 409 });
+    if (error instanceof Error && error.message === "REWARD_NOT_CONFIGURED") return NextResponse.json({ error: "Nilai hadiah berubah. Hubungi Tim RAI sebelum menerbitkan voucher." }, { status: 409 });
     return NextResponse.json({ error: "Hadiah belum dapat diterbitkan." }, { status: 503 });
   }
 }

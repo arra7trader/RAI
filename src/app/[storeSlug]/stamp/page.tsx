@@ -37,7 +37,7 @@ export default async function StoreStampPage({
       </div></header>
       <div className="container store-content">
         <section className="menu-heading"><span className="store-kicker">Program loyalti</span><h1>Kartu stempel {store.name}</h1><p>Daftar tanpa aplikasi dan tunjukkan kartu digital ke kasir.</p></section>
-        <StampCardClient storeSlug={store.slug} program={program ? { targetStamps: program.targetStamps, rewardTitle: program.rewardTitle } : null} cardToken={query.card ?? ""} />
+        <StampCardClient storeSlug={store.slug} program={program ? { targetStamps: program.targetStamps, rewardTitle: program.rewardTitle, termsText: program.termsText } : null} cardToken={query.card ?? ""} />
         <footer className="store-footer">Didukung oleh <Link href="/">UMKM Creative by RAI</Link></footer>
       </div>
     </main>

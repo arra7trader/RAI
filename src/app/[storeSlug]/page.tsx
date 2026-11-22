@@ -87,8 +87,8 @@ export default async function StorePage({
           ) : (
             <div className="store-action-card muted-card">
               <span className="store-card-icon">✳</span>
-              <strong>Program loyalti</strong>
-              <span>Kartu stempel digital segera hadir</span>
+              <strong>Layanan pelanggan</strong>
+              <span>Lihat menu, stempel, dan antrean toko</span>
             </div>
           )}
           <Link className="store-action-card" href={`/${store.slug}/stamp`}>
