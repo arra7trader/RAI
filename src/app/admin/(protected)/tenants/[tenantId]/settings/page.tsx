@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { AdminLoyaltySettings, AdminQrModeSettings } from "@/components/admin-tenant-controls";
+import { AdminPromotionCampaigns } from "@/components/promotion-campaigns";
+import { AdminTenantProfile } from "@/components/admin-tenant-profile";
 import { getDb } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +14,20 @@ export default async function AdminTenantSettingsPage({ params }: { params: Prom
       id: true,
       name: true,
       activeQrMode: true,
+      category: true,
+      phoneWa: true,
+      address: true,
+      googleReviewUrl: true,
+      latitude: true,
+      longitude: true,
+      geofenceRadius: true,
+      workStartTime: true,
+      planTier: true,
+      planStatus: true,
+      isActive: true,
       loyaltyProgram: { select: { isActive: true, targetStamps: true, rewardTitle: true, termsText: true, rewardDiscount: true } },
+      products: { select: { id: true, name: true, isAvailable: true }, orderBy: { name: "asc" } },
+      promotions: { orderBy: { createdAt: "desc" }, take: 50, select: { id: true, title: true, discountType: true, discountValue: true, minimumPurchase: true, quota: true, claimedCount: true, validUntil: true, isActive: true, freeProductId: true, freeProduct: { select: { name: true, isAvailable: true } } } },
     },
   });
   if (!tenant) notFound();
@@ -23,5 +38,7 @@ export default async function AdminTenantSettingsPage({ params }: { params: Prom
       <AdminQrModeSettings tenantId={tenant.id} initialMode={tenant.activeQrMode} />
       <AdminLoyaltySettings tenantId={tenant.id} initial={tenant.loyaltyProgram} />
     </div>
+    <AdminTenantProfile tenantId={tenant.id} initial={{ name: tenant.name, category: tenant.category, phoneWa: tenant.phoneWa, address: tenant.address, googleReviewUrl: tenant.googleReviewUrl, latitude: tenant.latitude, longitude: tenant.longitude, geofenceRadius: tenant.geofenceRadius, workStartTime: tenant.workStartTime, planTier: tenant.planTier, planStatus: tenant.planStatus, isActive: tenant.isActive }} />
+    <AdminPromotionCampaigns tenantId={tenant.id} products={tenant.products} initial={tenant.promotions.map((campaign) => ({ ...campaign, validUntil: campaign.validUntil.toISOString() }))} />
   </>;
 }

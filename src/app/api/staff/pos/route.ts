@@ -47,11 +47,18 @@ export async function POST(request: NextRequest) {
       let customer = customerPhone ? await tx.customer.findUnique({ where: { tenantId_phoneWa: { tenantId, phoneWa: customerPhone } } }) : null;
       if (customerPhone && !customer) customer = await tx.customer.create({ data: { tenantId, phoneWa: customerPhone, name: data.customerName || "Pelanggan" } });
       else if (customer && data.customerName && customer.name !== data.customerName) customer = await tx.customer.update({ where: { id: customer.id }, data: { name: data.customerName } });
-      let voucher = null; let discount = 0;
+      let voucher: Awaited<ReturnType<typeof tx.voucher.findFirst>> = null; let discount = 0;
       if (data.voucherCode) {
         voucher = await tx.voucher.findFirst({ where: { tenantId, code: data.voucherCode, status: "ISSUED", OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] } });
         if (!voucher || (voucher.customerId && voucher.customerId !== customer?.id)) throw new Error("VOUCHER_INVALID");
-        discount = Math.min(subtotal, voucher.discountAmount);
+        if (subtotal < voucher.minimumPurchase) throw new Error("VOUCHER_MINIMUM_NOT_MET");
+        if (voucher.discountType === "PERCENTAGE") discount = Math.floor(subtotal * Math.min(voucher.discountValue, 100) / 100);
+        else if (voucher.discountType === "FREE_ITEM") {
+          const freeLine = lines.find((line) => line.productId === voucher?.freeProductId && line.quantity > 0);
+          if (!freeLine) throw new Error("FREE_ITEM_REQUIRED");
+          discount = freeLine.unitPrice;
+        } else discount = voucher.discountAmount || voucher.discountValue;
+        discount = Math.min(subtotal, discount);
       }
       const shift = data.paymentMethod === "CASH" ? await tx.cashDrawerShift.findFirst({ where: { tenantId, closedAt: null } }) : null;
       if (data.paymentMethod === "CASH" && !shift) throw new Error("CASH_SHIFT_REQUIRED");
@@ -81,6 +88,8 @@ export async function POST(request: NextRequest) {
     const messages: Record<string, string> = {
       PRODUCT_UNAVAILABLE: "Satu atau lebih produk sudah tidak tersedia.", TOTAL_INVALID: "Nilai transaksi di luar batas yang didukung.",
       VOUCHER_INVALID: "Voucher tidak valid, sudah digunakan, kedaluwarsa, atau bukan milik pelanggan ini.",
+      VOUCHER_MINIMUM_NOT_MET: "Belanja belum mencapai minimum untuk memakai voucher ini.",
+      FREE_ITEM_REQUIRED: "Tambahkan produk hadiah promo ke keranjang sebelum memakai voucher.",
       CASH_SHIFT_REQUIRED: "Buka kas laci sebelum menerima pembayaran tunai.",
     };
     if (error instanceof Error && messages[error.message]) return NextResponse.json({ error: messages[error.message] }, { status: 409 });

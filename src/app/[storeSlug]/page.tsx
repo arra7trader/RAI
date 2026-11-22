@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db";
 import { BrandLogo } from "@/components/brand-logo";
 import { FeedbackForm } from "@/components/feedback-form";
+import { PublicPromotionCampaigns } from "@/components/promotion-campaigns";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,7 @@ export default async function StorePage({
   const store = await db.tenant.findUnique({
     where: { slug: storeSlug },
     select: {
+      id: true,
       name: true,
       slug: true,
       address: true,
@@ -29,6 +31,13 @@ export default async function StorePage({
   });
 
   if (!store || !store.isActive) notFound();
+
+  const promotions = await db.promotionCampaign.findMany({
+    where: { tenantId: store.id, isActive: true, validUntil: { gt: new Date() } },
+    orderBy: { validUntil: "asc" }, take: 12,
+    select: { id: true, title: true, discountType: true, discountValue: true, minimumPurchase: true, quota: true, claimedCount: true, validUntil: true, freeProduct: { select: { name: true, isAvailable: true } } },
+  });
+  const availablePromotions = promotions.filter((campaign) => campaign.claimedCount < campaign.quota && (campaign.discountType !== "FREE_ITEM" || campaign.freeProduct?.isAvailable));
 
   const showReview = query.focus === "review" || store.activeQrMode === "REVIEW_FOCUS";
   const isClosed = query.mode === "closed" || store.activeQrMode === "CLOSED_STORE";
@@ -66,7 +75,7 @@ export default async function StorePage({
             <span>Lihat daftar pilihan toko</span>
           </Link>
           {store.googleReviewUrl ? (
-            <a className="store-action-card" href={store.googleReviewUrl} target="_blank" rel="noreferrer">
+              <a className="store-action-card" href={`/api/public/${store.slug}/review`} target="_blank" rel="noreferrer">
               <span className="store-card-icon gold">★</span>
               <strong>Ulasan Google</strong>
               <span>Beri ulasan untuk toko</span>
@@ -101,6 +110,8 @@ export default async function StorePage({
           </Link>
         </section>
 
+        <PublicPromotionCampaigns storeSlug={store.slug} initial={availablePromotions.map((campaign) => ({ ...campaign, validUntil: campaign.validUntil.toISOString() }))} />
+
         {showReview && (
           <section className="review-callout" id="ulasan">
             <div>
@@ -109,7 +120,7 @@ export default async function StorePage({
               <p>Anda bisa memberi ulasan langsung di Google. Semua pelanggan mendapat pilihan yang sama.</p>
             </div>
             {store.googleReviewUrl ? (
-              <a className="button" href={store.googleReviewUrl} target="_blank" rel="noreferrer">Buka Google Maps ↗</a>
+              <a className="button" href={`/api/public/${store.slug}/review`} target="_blank" rel="noreferrer">Buka Google Maps ↗</a>
             ) : (
               <span className="store-address">Link ulasan belum tersedia.</span>
             )}

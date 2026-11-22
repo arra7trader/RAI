@@ -42,6 +42,7 @@ model Tenant {
   reviewClicks      ReviewClick[]
   stampEvents       StampEvent[]
   vouchers          Voucher[]
+  promotions        PromotionCampaign[]
   queueTickets      QueueTicket[]
   orders            Order[]
   cashDrawerShifts  CashDrawerShift[]
@@ -142,17 +143,19 @@ model StoreVisit {
 }
 
 model Product {
-  id          String      @id @default(uuid())
-  tenantId    String      @map("tenant_id")
-  category    String      @default("Umum")
-  name        String
-  description String      @default("")
-  price       Int
-  imageUrl    String?     @map("image_url")
-  isAvailable Boolean     @default(true) @map("is_available")
-  createdAt   DateTime    @default(now()) @map("created_at")
-  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  orderItems  OrderItem[]
+  id                String              @id @default(uuid())
+  tenantId          String              @map("tenant_id")
+  category          String              @default("Umum")
+  name              String
+  description       String              @default("")
+  price             Int
+  imageUrl          String?             @map("image_url")
+  isAvailable       Boolean             @default(true) @map("is_available")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderItems        OrderItem[]
+  freeItemVouchers  Voucher[]           @relation("VoucherFreeProduct")
+  freeItemCampaigns PromotionCampaign[] @relation("CampaignFreeProduct")
 
   @@index([tenantId, isAvailable, category])
   @@map("products")
@@ -237,22 +240,51 @@ model StampEvent {
 }
 
 model Voucher {
-  id             String    @id @default(uuid())
-  tenantId       String    @map("tenant_id")
-  customerId     String?   @map("customer_id")
-  code           String    @unique
-  title          String
-  discountAmount Int       @default(0) @map("discount_amount")
-  status         String    @default("ISSUED")
-  expiresAt      DateTime? @map("expires_at")
-  redeemedAt     DateTime? @map("redeemed_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  customer       Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  orders         Order[]
+  id              String             @id @default(uuid())
+  tenantId        String             @map("tenant_id")
+  customerId      String?            @map("customer_id")
+  promotionId     String?            @map("promotion_id")
+  freeProductId   String?            @map("free_product_id")
+  code            String             @unique
+  title           String
+  discountAmount  Int                @default(0) @map("discount_amount")
+  discountType    String             @default("NOMINAL") @map("discount_type")
+  discountValue   Int                @default(0) @map("discount_value")
+  minimumPurchase Int                @default(0) @map("minimum_purchase")
+  status          String             @default("ISSUED")
+  expiresAt       DateTime?          @map("expires_at")
+  redeemedAt      DateTime?          @map("redeemed_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer        Customer?          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  promotion       PromotionCampaign? @relation(fields: [promotionId], references: [id], onDelete: SetNull)
+  freeProduct     Product?           @relation("VoucherFreeProduct", fields: [freeProductId], references: [id], onDelete: SetNull)
+  orders          Order[]
 
+  @@unique([promotionId, customerId])
   @@index([tenantId, status, expiresAt])
   @@map("vouchers")
+}
+
+model PromotionCampaign {
+  id              String    @id @default(uuid())
+  tenantId        String    @map("tenant_id")
+  title           String
+  discountType    String    @map("discount_type")
+  discountValue   Int       @map("discount_value")
+  minimumPurchase Int       @default(0) @map("minimum_purchase")
+  quota           Int
+  claimedCount    Int       @default(0) @map("claimed_count")
+  validUntil      DateTime  @map("valid_until")
+  isActive        Boolean   @default(true) @map("is_active")
+  freeProductId   String?   @map("free_product_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  freeProduct     Product?  @relation("CampaignFreeProduct", fields: [freeProductId], references: [id], onDelete: SetNull)
+  vouchers        Voucher[]
+
+  @@index([tenantId, isActive, validUntil])
+  @@map("promotion_campaigns")
 }
 
 model CustomerFeedback {

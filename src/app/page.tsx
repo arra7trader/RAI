@@ -11,7 +11,7 @@ const consultationUrl = adminWhatsApp
 const features = [
   { icon: "★", tone: "gold", title: "Ulasan pelanggan", copy: "Kumpulkan ulasan dan masukan pelanggan di satu alur yang mudah." },
   { icon: "↗", tone: "teal", title: "Pengunjung QR", copy: "Pahami jumlah kunjungan dari scan QR harian di toko." },
-  { icon: "✳", tone: "gold", title: "Kartu stempel digital", copy: "Bangun kebiasaan pelanggan kembali tanpa aplikasi tambahan." },
+  { icon: "✳", tone: "gold", title: "Stempel & voucher promo", copy: "Pelanggan menyimpan kartu digital dan mengklaim voucher dengan nomor WhatsApp." },
   { icon: "▦", tone: "teal", title: "POS & kas laci", copy: "Catat transaksi dan pergerakan uang kas dalam satu alur kerja." },
   { icon: "◎", tone: "coral", title: "Absensi karyawan", copy: "Catat kehadiran tim dengan verifikasi lokasi toko." },
   { icon: "♥", tone: "coral", title: "Setup terima beres", copy: "Tim RAI bantu menyiapkan profil, katalog, dan QR siap digunakan." },
@@ -31,12 +31,12 @@ const usageSteps = [
   {
     number: "03",
     title: "Pasang QR di toko",
-    copy: "Cetak dan pajang QR. Pelanggan scan untuk melihat profil atau katalog, lalu memakai fitur pelanggan yang tersedia pada paket Anda.",
+    copy: "Cetak dan pajang QR. Pelanggan scan untuk melihat menu, membuat kartu stempel, mengklaim promo dengan WhatsApp, atau mengambil nomor antrean.",
   },
   {
     number: "04",
     title: "Kelola toko setiap hari",
-    copy: "Owner dan staff masuk dengan akun masing-masing. Dashboard, POS, kasir, antrean, stempel, absensi, dan laporan mengikuti paket serta akses akun.",
+    copy: "Owner masuk ke dashboard untuk cek omzet, masukan, menu, dan laporan. Kasir memakai POS, memasukkan voucher, mencatat shift, antrean, stempel, dan absensi. Tim RAI mengatur QR serta promo dari panel admin.",
   },
 ];
 
