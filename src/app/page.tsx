@@ -69,6 +69,7 @@ export default function Home() {
           </a>
           <nav className="nav-links" aria-label="Navigasi utama">
             <a href="#cara-kerja">Cara kerja</a>
+            <a href="#kenapa-rai">Kenapa RAI</a>
             <a href="#fitur">Fitur</a>
             <a href="#paket">Paket layanan</a>
           </nav>
@@ -127,6 +128,61 @@ export default function Home() {
               <a className="button secondary" href="/login">Login owner / staff</a>
             </div>
             <p className="usage-note">Akun login diberikan setelah toko disetujui. Fitur yang dapat dipakai mengikuti paket dan peran akun.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="section why-rai-section" id="kenapa-rai">
+        <div className="container">
+          <div className="why-rai-layout">
+            <div className="why-rai-copy">
+              <span className="eyebrow">Kenapa UMKM memilih RAI</span>
+              <h2>Teknologi rapi. Anda tetap fokus berjualan.</h2>
+              <p className="why-rai-lead">Satu QR menyatukan pengalaman pelanggan dengan rutinitas toko, sementara Tim RAI membantu menyiapkan semuanya.</p>
+              <div className="why-rai-benefits">
+                <article><span className="why-benefit-icon">01</span><div><h3>Mulai tanpa aplikasi pelanggan</h3><p>Scan QR langsung membuka menu, stempel digital, promo, dan antrean lewat browser.</p></div></article>
+                <article><span className="why-benefit-icon gold">02</span><div><h3>Operasional dalam satu alur</h3><p>Owner memantau ringkasan; kasir mencatat transaksi, voucher, kas, dan kehadiran.</p></div></article>
+                <article><span className="why-benefit-icon coral">03</span><div><h3>Dibantu Tim RAI</h3><p>Profil, katalog, QR, dan promo bisa disiapkan bersama tim, bukan diserahkan sebagai pekerjaan teknis untuk owner.</p></div></article>
+              </div>
+              <a className="why-rai-link" href="#paket">Lihat layanan yang cocok <span aria-hidden="true">↗</span></a>
+            </div>
+
+            <div className="rai-journey-visual" aria-label="Simulasi alur QR RAI: scan pelanggan membuka layanan toko, sementara scan staf masuk ke perangkat kerja toko">
+              <div className="journey-topline"><span className="journey-live-dot" />SIMULASI PENGALAMAN RAI<span className="journey-topline-tag">SATU QR · TERHUBUNG</span></div>
+              <div className="journey-scene">
+                <div className="journey-customer-card">
+                  <span className="journey-mini-label">PELANGGAN</span>
+                  <div className="journey-phone-frame">
+                    <div className="journey-phone-camera" />
+                    <div className="journey-store-logo">RAI<span>CREATIVE</span></div>
+                    <div className="journey-store-title">Kopi Senja</div>
+                    <div className="journey-store-subtitle">Temukan favoritmu hari ini</div>
+                    <div className="journey-menu-item"><span className="journey-drink-art">☕</span><span><b>Es Kopi Susu</b><small>Favorit pelanggan</small></span><strong>Rp18k</strong></div>
+                    <div className="journey-loyalty"><span>✳</span><span><b>Stempel digital</b><small>3 dari 5 kunjungan</small></span><i>•••○○</i></div>
+                    <div className="journey-phone-cta">Lihat menu toko <span>↗</span></div>
+                  </div>
+                  <div className="journey-customer-caption"><span className="journey-step-dot">1</span>Scan QR · buka layanan</div>
+                </div>
+
+                <div className="journey-qr-node">
+                  <div className="journey-qr-glow" />
+                  <div className="journey-qr-card"><span>RAI</span><div className="journey-qr-pattern" aria-hidden="true">{Array.from({ length: 81 }, (_, index) => <i key={index} />)}</div><small>SCAN & TEMUKAN</small></div>
+                  <span className="journey-qr-label">QR DINAMIS</span>
+                </div>
+
+                <div className="journey-owner-card">
+                  <span className="journey-mini-label">OWNER & TIM TOKO</span>
+                  <div className="journey-dashboard-frame">
+                    <div className="journey-dashboard-head"><span className="journey-dashboard-mark">R</span><span><b>Ringkasan toko</b><small>Kopi Senja · Hari ini</small></span><span className="journey-dashboard-dots">•••</span></div>
+                    <div className="journey-metric-grid"><div><small>Omzet hari ini</small><b>Rp1,42 jt</b><span>↑ ringkasan transaksi</span></div><div><small>Scan QR</small><b>48</b><span>pengunjung toko</span></div></div>
+                    <div className="journey-chart"><div><span>Aktivitas pelanggan</span><small>Hari ini</small></div><div className="journey-bars" aria-hidden="true">{[28,45,36,64,49,78,58,91,67,84,53,73].map((height, index) => <i key={index} style={{ height: `${height}%` }} />)}</div><div className="journey-chart-axis"><span>09.00</span><span>13.00</span><span>17.00</span></div></div>
+                    <div className="journey-ops-row"><span>✓</span><b>POS · kas · absensi</b><small>siap digunakan</small></div>
+                  </div>
+                  <div className="journey-owner-caption"><span className="journey-step-dot gold">2</span>Login sesuai peran · kelola toko</div>
+                </div>
+              </div>
+              <div className="journey-bottomline"><span>Satu sistem yang bertumbuh bersama usaha.</span><span><i />DATA TOKO TERPISAH</span></div>
+            </div>
           </div>
         </div>
       </section>
