@@ -4,7 +4,7 @@ import { requireUser } from "@/lib/admin-auth";
 import { getDb } from "@/lib/db";
 
 export const runtime = "nodejs";
-const schema = z.object({ id: z.string().uuid().optional(), category: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(120), description: z.string().trim().max(500).default(""), price: z.number().int().min(0).max(1_000_000_000), isAvailable: z.boolean().default(true), trackInventory: z.boolean().default(true), initialStock: z.number().int().min(0).max(1_000_000).default(0), lowStockThreshold: z.number().int().min(0).max(1_000_000).default(5) });
+const schema = z.object({ id: z.string().uuid().optional(), category: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(120), description: z.string().trim().max(500).default(""), price: z.number().int().min(0).max(1_000_000_000), isAvailable: z.boolean().default(true), trackInventory: z.boolean().default(false), initialStock: z.number().int().min(0).max(1_000_000).default(0), lowStockThreshold: z.number().int().min(0).max(1_000_000).default(5) });
 
 export async function GET() {
   const user = await requireUser("OWNER");
