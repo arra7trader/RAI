@@ -15,7 +15,7 @@ export default async function OwnerLayout({ children }: Readonly<{ children: Rea
         </div>
       </header>
       <div className="container admin-layout owner-layout">
-        <nav className="admin-nav" aria-label="Navigasi owner"><Link href="/dashboard">Ringkasan</Link><Link href="/dashboard/products">Menu & produk</Link><Link href="/dashboard/reports">Laporan & pelanggan</Link><Link href="/app/pos">POS kasir</Link><Link href="/app/attendance">Absensi tim</Link></nav>
+        <nav className="admin-nav" aria-label="Navigasi owner"><Link href="/dashboard">Ringkasan</Link><Link href="/dashboard/products">Menu & produk</Link><Link href="/dashboard/inventory">Stok & pembelian</Link><Link href="/dashboard/reports">Laporan & pelanggan</Link><Link href="/app/pos">POS kasir</Link><Link href="/app/attendance">Absensi tim</Link></nav>
         <main className="admin-main owner-layout-main">{children}</main>
       </div>
     </div>

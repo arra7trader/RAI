@@ -77,6 +77,7 @@ export default async function OwnerDashboardPage() {
     <section className="dashboard-help"><div><span className="admin-eyebrow">Layanan Terima Beres</span><h2>Perlu ubah menu atau promo?</h2><p>Tim RAI bisa membantu menyiapkan perubahan toko Anda.</p></div><a className="button" href={helpUrl} target={adminWhatsApp ? "_blank" : undefined} rel={adminWhatsApp ? "noreferrer" : undefined}>Chat Tim RAI <span aria-hidden="true">↗</span></a></section>
     <div className="admin-quick-actions owner-quick-actions">
       <Link className="admin-action-card" href="/dashboard/products"><strong>Kelola menu & produk</strong><span>Perbarui katalog pelanggan dan harga di POS.</span></Link>
+      <Link className="admin-action-card" href="/dashboard/inventory"><strong>Stok & pembelian</strong><span>Pantau saldo, catat pemasok, penerimaan barang, dan mutasi.</span></Link>
       <Link className="admin-action-card" href="/dashboard/reports"><strong>Laporan & pelanggan</strong><span>Pantau transaksi, feedback, absensi, dan unduh Excel.</span></Link>
       <Link className="admin-action-card" href="/app/pos"><strong>POS & kas laci</strong><span>Catat transaksi dan buka atau tutup shift kas.</span></Link>
       <Link className="admin-action-card" href="/app/queue"><strong>Antrean</strong><span>Kelola nomor antrean toko.</span></Link>

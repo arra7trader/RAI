@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-type Product = { id: string; name: string; category: string; price: number };
+type Product = { id: string; name: string; category: string; price: number; trackInventory: boolean; stockQuantity: number };
 type CartLine = { product: Product; quantity: number };
 type Shift = { id: string; openingCash: number; expectedCash?: number } | null;
 type Receipt = {
@@ -49,6 +49,11 @@ export function PointOfSale() {
   const subtotal = cart.reduce((total, line) => total + line.product.price * line.quantity, 0);
 
   function add(product: Product) {
+    if (product.trackInventory) {
+      const inCart = cart.find((item) => item.product.id === product.id)?.quantity ?? 0;
+      if (inCart >= product.stockQuantity) { setError(`Stok ${product.name} tersisa ${product.stockQuantity}.`); return; }
+    }
+    setError("");
     setCart((current) => {
       const line = current.find((item) => item.product.id === product.id);
       return line
@@ -58,6 +63,12 @@ export function PointOfSale() {
   }
 
   function quantity(id: string, value: number) {
+    const product = products.find((item) => item.id === id);
+    if (value >= 1 && product?.trackInventory && value > product.stockQuantity) {
+      setError(`Stok ${product.name} tersisa ${product.stockQuantity}.`);
+      return;
+    }
+    setError("");
     setCart((current) => value < 1
       ? current.filter((item) => item.product.id !== id)
       : current.map((item) => item.product.id === id ? { ...item, quantity: Math.min(value, 99) } : item));
@@ -131,7 +142,7 @@ export function PointOfSale() {
       <section className="admin-card pos-products">
         <div className="queue-admin-head"><div><span className="admin-eyebrow">Katalog tersedia</span><h2>Pilih produk</h2></div></div>
         <div className="pos-product-grid">
-          {products.map((product) => <button className="pos-product" type="button" key={product.id} onClick={() => add(product)}><span>{product.category}</span><strong>{product.name}</strong><b>{money.format(product.price)}</b></button>)}
+          {products.map((product) => <button className="pos-product" type="button" key={product.id} disabled={product.trackInventory && product.stockQuantity < 1} onClick={() => add(product)}><span>{product.category}</span><strong>{product.name}</strong><b>{money.format(product.price)}</b>{product.trackInventory && <small>Stok {product.stockQuantity}</small>}</button>)}
           {!products.length && <p className="admin-field-help">Belum ada produk tersedia. Owner dapat mengisinya di Menu & produk.</p>}
         </div>
       </section>

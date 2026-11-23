@@ -17,7 +17,7 @@ export async function GET() {
   if (!user?.tenantId) return NextResponse.json({ error: "Sesi toko tidak valid." }, { status: 401 });
   const db = getDb();
   const [products, shift] = await Promise.all([
-    db.product.findMany({ where: { tenantId: user.tenantId, isAvailable: true }, orderBy: [{ category: "asc" }, { name: "asc" }], select: { id: true, name: true, category: true, price: true } }),
+    db.product.findMany({ where: { tenantId: user.tenantId, isAvailable: true }, orderBy: [{ category: "asc" }, { name: "asc" }], select: { id: true, name: true, category: true, price: true, trackInventory: true, stockQuantity: true } }),
     db.cashDrawerShift.findFirst({ where: { tenantId: user.tenantId, closedAt: null }, select: { id: true, openingCash: true, openedAt: true } }),
   ]);
   return NextResponse.json({ products, shift }, { headers: { "cache-control": "no-store" } });
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   try {
     const result = await db.$transaction(async (tx) => {
       const ids = [...new Set(data.items.map((item) => item.productId))];
-      const products = await tx.product.findMany({ where: { id: { in: ids }, tenantId, isAvailable: true }, select: { id: true, name: true, price: true } });
+      const products = await tx.product.findMany({ where: { id: { in: ids }, tenantId, isAvailable: true }, select: { id: true, name: true, price: true, trackInventory: true } });
       if (products.length !== ids.length) throw new Error("PRODUCT_UNAVAILABLE");
       const byId = new Map(products.map((product) => [product.id, product]));
       const lines = data.items.map((item) => {
@@ -43,6 +43,8 @@ export async function POST(request: NextRequest) {
       });
       const subtotal = lines.reduce((total, line) => total + line.lineTotal, 0);
       if (!Number.isSafeInteger(subtotal)) throw new Error("TOTAL_INVALID");
+      const stockByProduct = new Map<string, number>();
+      for (const item of data.items) stockByProduct.set(item.productId, (stockByProduct.get(item.productId) ?? 0) + item.quantity);
       const customerPhone = data.customerPhone.replace(/\D/g, "");
       let customer = customerPhone ? await tx.customer.findUnique({ where: { tenantId_phoneWa: { tenantId, phoneWa: customerPhone } } }) : null;
       if (customerPhone && !customer) customer = await tx.customer.create({ data: { tenantId, phoneWa: customerPhone, name: data.customerName || "Pelanggan" } });
@@ -70,6 +72,13 @@ export async function POST(request: NextRequest) {
         },
         select: { id: true, subtotal: true, discount: true, total: true, paymentMethod: true, createdAt: true, items: true },
       });
+      for (const [productId, quantity] of stockByProduct) {
+        const product = byId.get(productId)!;
+        if (!product.trackInventory) continue;
+        const changed = await tx.product.updateMany({ where: { id: productId, tenantId, trackInventory: true, stockQuantity: { gte: quantity } }, data: { stockQuantity: { decrement: quantity } } });
+        if (changed.count !== 1) throw new Error("INSUFFICIENT_STOCK");
+        await tx.stockMovement.create({ data: { tenantId, productId, orderId: order.id, type: "SALE", quantity: -quantity, note: "Penjualan POS" } });
+      }
       if (voucher) {
         const redeemed = await tx.voucher.updateMany({ where: { id: voucher.id, tenantId, status: "ISSUED" }, data: { status: "REDEEMED", redeemedAt: new Date() } });
         if (redeemed.count !== 1) throw new Error("VOUCHER_INVALID");
@@ -87,6 +96,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const messages: Record<string, string> = {
       PRODUCT_UNAVAILABLE: "Satu atau lebih produk sudah tidak tersedia.", TOTAL_INVALID: "Nilai transaksi di luar batas yang didukung.",
+      INSUFFICIENT_STOCK: "Stok tidak cukup untuk menyelesaikan transaksi. Perbarui stok atau kurangi jumlah produk.",
       VOUCHER_INVALID: "Voucher tidak valid, sudah digunakan, kedaluwarsa, atau bukan milik pelanggan ini.",
       VOUCHER_MINIMUM_NOT_MET: "Belanja belum mencapai minimum untuk memakai voucher ini.",
       FREE_ITEM_REQUIRED: "Tambahkan produk hadiah promo ke keranjang sebelum memakai voucher.",
